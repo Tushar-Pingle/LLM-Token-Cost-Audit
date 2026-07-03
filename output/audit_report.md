@@ -1,12 +1,12 @@
 # Token Cost Audit Report — Customer Support Agent
 
-**Result: 83% cost reduction. $21,612/mo → $3,585/mo ($216,328/yr saved at 1M requests/month).**
+**Result: 82% cost reduction. $19,662/mo → $3,464/mo ($194,371/yr saved at 1M requests/month).**
 
 ## Per-request input footprint
 
 | | Baseline | Optimized |
 |---|---|---|
-| Static prefix (system + tools) | 4,784 tok | 1,515 tok |
+| Static prefix (system + tools) | 4,134 tok | 1,066 tok |
 | Dynamic (history + user msg) | 1,020 tok | 1,020 tok |
 | Avg output | 280 tok | 170 tok |
 
@@ -14,21 +14,21 @@
 
 | Component | Baseline | Optimized | Delta |
 |---|---|---|---|
-| Static prefix input | $14,352 | $406 | -$13,946 |
+| Static prefix input | $12,402 | $285 | -$12,117 |
 | Dynamic input | $3,060 | $1,734 | -$1,326 |
 | Output | $4,200 | $1,445 | -$2,755 |
-| **Total** | **$21,612** | **$3,585** | **-$18,027 (83%)** |
+| **Total** | **$19,662** | **$3,464** | **-$16,198 (82%)** |
 
 ## Optimization levers applied
 
 ### 1. System prompt compression
-- Baseline: 1,443 tokens
-- Optimized: 384 tokens (-73%)
+- Baseline: 1,402 tokens
+- Optimized: 387 tokens (-72%)
 - Prose policies rewritten as tables and terse rules. No information removed; filler, restatement, and throat-clearing removed. Paid on every request.
 
 ### 2. Tool schema trimming
-- Baseline: 3,341 tokens
-- Optimized: 1,131 tokens (-66%)
+- Baseline: 2,732 tokens
+- Optimized: 679 tokens (-75%)
 - Descriptions reduced to what/when. Policy details (refund limits, return windows) stated once in the system prompt instead of repeated per tool.
 
 ### 3. Prompt caching
