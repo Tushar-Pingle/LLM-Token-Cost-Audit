@@ -1,0 +1,163 @@
+[
+  {
+    "name": "lookup_order",
+    "description": "This tool allows you to look up detailed information about a customer's order in the Northwind Commerce order management system. You should use this tool whenever a customer asks about their order status, wants to track their order, has questions about what items were included in their order, or when you need to verify order details before processing a return or refund. The tool will return comprehensive information including the order ID, order date, order status (which can be one of: pending, processing, shipped, delivered, cancelled, or refunded), the full list of items in the order with their quantities and prices, the shipping address, the shipping method selected, the tracking number if the order has shipped, the estimated delivery date, and the payment method used (last four digits only for security purposes). For example, if a customer says 'Where is my order?' or 'What did I order last week?' or 'Can you check on order 12345?', you should use this tool. Always confirm the order ID with the customer before looking it up. If the customer does not know their order ID, you can search by their email address instead using the search_orders_by_email tool.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "order_id": {
+          "type": "string",
+          "description": "The unique identifier of the order to look up. Order IDs at Northwind Commerce follow the format 'NW-' followed by 8 digits, for example 'NW-12345678'. The customer can find this in their confirmation email or in their account order history page. Always validate that the order ID matches this format before calling the tool."
+        },
+        "include_history": {
+          "type": "boolean",
+          "description": "Whether or not to include the full status change history of the order in the response. Set this to true if the customer is asking about when their order changed status, for example when it shipped or when it was delivered. Set this to false for simple status lookups to keep the response smaller. The default value is false."
+        }
+      },
+      "required": ["order_id"]
+    }
+  },
+  {
+    "name": "search_orders_by_email",
+    "description": "This tool allows you to search for all orders associated with a particular customer email address in the Northwind Commerce order management system. You should use this tool when a customer does not know or cannot find their order ID but needs help with an order. The tool will return a list of the customer's most recent orders, up to a maximum of 10 orders, sorted by order date in descending order (most recent first). Each order in the list includes the order ID, order date, order status, total amount, and a brief summary of the items. For example, if a customer says 'I don't have my order number but I ordered something last Tuesday', you should use this tool with their email address. Remember that you must verify the customer's identity before sharing any order information with them, as described in the data privacy guidelines in your system prompt.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "The email address of the customer whose orders you want to search for. This should be the email address associated with their Northwind Commerce account. Always confirm the spelling of the email address with the customer before searching."
+        },
+        "limit": {
+          "type": "integer",
+          "description": "The maximum number of orders to return in the search results. This can be any number between 1 and 10. The default value is 5, which is usually sufficient for most customer inquiries. Only increase this if the customer is looking for an older order that might not appear in the first 5 results."
+        }
+      },
+      "required": ["email"]
+    }
+  },
+  {
+    "name": "initiate_return",
+    "description": "This tool initiates the return merchandise authorization (RMA) process for one or more items from a customer's order in the Northwind Commerce returns management system. Before using this tool, you must first verify that the order exists using the lookup_order tool, confirm that the delivery date falls within the eligible return window (30 days for most items, 15 days for electronics as described in your system prompt), and check that the item category is eligible for return (remember that perishable goods, personalized items, digital downloads, gift cards, and final sale items cannot be returned). Once you call this tool, the system will generate an RMA number and automatically send the customer a prepaid shipping label to their email address on file within 24 hours. The tool returns the RMA number and confirmation details which you should share with the customer. For example, if a customer says 'I want to return the shoes I bought', first look up their order, verify eligibility, and then use this tool.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "order_id": {
+          "type": "string",
+          "description": "The unique identifier of the order containing the items to be returned. This must be a valid order ID that you have already verified exists using the lookup_order tool."
+        },
+        "item_ids": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "A list of the item IDs within the order that the customer wishes to return. These item IDs can be found in the response from the lookup_order tool. The customer may return one item, several items, or all items from an order."
+        },
+        "reason": {
+          "type": "string",
+          "enum": ["defective", "damaged_in_shipping", "wrong_item", "not_as_described", "no_longer_needed", "better_price_found", "other"],
+          "description": "The reason the customer is returning the item. Ask the customer why they want to return the item and select the most appropriate reason from the list. This information is used by our quality assurance team to improve our products and services."
+        },
+        "customer_comments": {
+          "type": "string",
+          "description": "Any additional comments from the customer about the return. This is optional but helpful for our quality assurance team. For example, if the item was defective, ask the customer to briefly describe the defect."
+        }
+      },
+      "required": ["order_id", "item_ids", "reason"]
+    }
+  },
+  {
+    "name": "issue_refund",
+    "description": "This tool issues a refund to a customer's original payment method through the Northwind Commerce payment processing system. You should use this tool in two situations: first, when processing a refund for a return that has been received and inspected at the warehouse; and second, when issuing a refund without a return for a damaged or defective item. Please remember the very important policy that you may only issue refunds up to $100 without escalation. Any refund request above $100 must be escalated to a human agent using the escalate_to_human tool. The refund will be processed immediately but may take 5 to 10 business days to appear on the customer's statement depending on their financial institution. Always inform the customer of this timeframe so they know when to expect their money back. For example, if a customer received a damaged item worth $45 and does not want a replacement, you can use this tool to issue them a $45 refund directly.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "order_id": {
+          "type": "string",
+          "description": "The unique identifier of the order for which the refund is being issued."
+        },
+        "amount": {
+          "type": "number",
+          "description": "The amount of money to refund in US dollars. This must not exceed 100.00 as refunds above one hundred dollars require escalation to a human agent per company policy. The amount should not exceed the total value of the order."
+        },
+        "reason": {
+          "type": "string",
+          "description": "A brief explanation of why the refund is being issued. This is recorded in the order history for audit purposes and may be reviewed by the finance team."
+        }
+      },
+      "required": ["order_id", "amount", "reason"]
+    }
+  },
+  {
+    "name": "update_account",
+    "description": "This tool updates a customer's account information in the Northwind Commerce customer relationship management system. You can use this tool to update the customer's email address, shipping address, or subscription preferences. Please remember that before making any changes to a customer's account, you absolutely must verify their identity by confirming their current email address and the last four digits of the payment method on file, as described in the data privacy and security guidelines section of your system prompt. Note that this tool cannot be used to update payment information; if a customer needs to update their credit card or other payment details, direct them to do so themselves in the account settings page of the website or mobile app, as this is more secure. For example, if a customer says 'I moved and need to change my address', verify their identity first and then use this tool.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "account_email": {
+          "type": "string",
+          "description": "The current email address of the account to be updated. This identifies which account to modify."
+        },
+        "field": {
+          "type": "string",
+          "enum": ["email", "shipping_address", "subscription_preferences"],
+          "description": "The specific field of the account that should be updated. Choose 'email' to change the account email address, 'shipping_address' to change the default shipping address, or 'subscription_preferences' to change marketing email preferences."
+        },
+        "new_value": {
+          "type": "string",
+          "description": "The new value for the field being updated. For addresses, include the full address with street, city, state, and ZIP code. For email, this is the new email address. For subscription preferences, use 'subscribe' or 'unsubscribe'."
+        }
+      },
+      "required": ["account_email", "field", "new_value"]
+    }
+  },
+  {
+    "name": "get_product_info",
+    "description": "This tool retrieves detailed product information from the Northwind Commerce product catalog system. You should use this tool whenever a customer asks questions about a product, including questions about specifications, pricing, availability, stock status, compatibility with other products, warranty details, or product dimensions. The tool returns comprehensive product data including the product name, SKU, current price, sale price if applicable, stock availability, detailed specifications, warranty information, customer rating, and related or compatible products. For example, if a customer asks 'Does the wireless keyboard work with Mac?' or 'How much is the ergonomic office chair?' or 'Is the standing desk in stock?', you should use this tool to get accurate, up-to-date information rather than relying on your own knowledge which may be outdated.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "The product name, SKU, or a descriptive search query to find the product. Be as specific as possible to get the most relevant result. For example, 'ergonomic office chair black' is better than just 'chair'."
+        }
+      },
+      "required": ["query"]
+    }
+  },
+  {
+    "name": "escalate_to_human",
+    "description": "This tool escalates the current conversation to a human support agent in the Northwind Commerce support queue system. You must use this tool in the following situations, as described in detail in the escalation procedures section of your system prompt: when the customer explicitly requests to speak with a human agent; when the customer is reporting a safety issue with a product; when the customer is threatening legal action; when the refund amount requested exceeds $100; when the customer has contacted support more than 3 times about the same issue; when the customer's account shows signs of fraud or unauthorized access; or when the customer is a business account holder with an enterprise contract. When you escalate, always write a clear and complete summary of the issue for the human agent, including all relevant order numbers, the customer's desired outcome, and what steps you have already taken. After calling this tool, inform the customer that a human agent will respond, typically within 2 hours during business hours.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string",
+          "description": "A clear, complete summary of the customer's issue written for the human agent who will take over. Include all relevant order numbers, what the customer wants, what you have already tried or verified, and any important context from the conversation."
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["low", "normal", "high", "urgent"],
+          "description": "The priority level for the escalation. Use 'urgent' only for safety issues or suspected fraud. Use 'high' for legal threats or repeat contacts. Use 'normal' for most escalations such as refunds over $100. Use 'low' for non-time-sensitive matters."
+        },
+        "category": {
+          "type": "string",
+          "enum": ["refund_over_limit", "safety_issue", "legal", "fraud", "repeat_contact", "enterprise_account", "customer_request", "other"],
+          "description": "The category of the escalation, used for routing to the appropriate specialized human support team."
+        }
+      },
+      "required": ["summary", "priority", "category"]
+    }
+  },
+  {
+    "name": "check_giftcard_balance",
+    "description": "This tool checks the current balance of a Northwind Commerce gift card in the gift card management system. You should use this tool when a customer asks about their gift card balance or wants to know if a gift card is still valid. The tool returns the current balance, the original value of the gift card, the expiration date if applicable (note that gift cards issued after January 2023 do not expire), and whether the card is active or has been deactivated. Remember that gift cards themselves cannot be refunded or returned per our return policy. For example, if a customer says 'How much is left on my gift card?', ask them for the gift card number and use this tool.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "card_number": {
+          "type": "string",
+          "description": "The 16-digit gift card number found on the back of a physical gift card or in the gift card email for digital gift cards. Do not confuse this with a credit card number; gift card numbers at Northwind Commerce always begin with the digits '6039'."
+        }
+      },
+      "required": ["card_number"]
+    }
+  }
+]

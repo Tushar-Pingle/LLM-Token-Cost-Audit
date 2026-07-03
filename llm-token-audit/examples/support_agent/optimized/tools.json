@@ -1,0 +1,101 @@
+[
+  {
+    "name": "lookup_order",
+    "description": "Get order details (status, items, tracking, delivery date, payment last-4) by order ID. Use before any return/refund action.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "order_id": {"type": "string", "description": "Format: NW-XXXXXXXX (8 digits)"},
+        "include_history": {"type": "boolean", "description": "Include status-change history. Default false."}
+      },
+      "required": ["order_id"]
+    }
+  },
+  {
+    "name": "search_orders_by_email",
+    "description": "List a customer's recent orders when they don't know the order ID. Verify identity first.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "email": {"type": "string"},
+        "limit": {"type": "integer", "description": "1-10, default 5"}
+      },
+      "required": ["email"]
+    }
+  },
+  {
+    "name": "initiate_return",
+    "description": "Create an RMA for eligible items (check return window and category eligibility first). Sends prepaid label within 24h.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "order_id": {"type": "string"},
+        "item_ids": {"type": "array", "items": {"type": "string"}},
+        "reason": {"type": "string", "enum": ["defective", "damaged_in_shipping", "wrong_item", "not_as_described", "no_longer_needed", "better_price_found", "other"]},
+        "customer_comments": {"type": "string"}
+      },
+      "required": ["order_id", "item_ids", "reason"]
+    }
+  },
+  {
+    "name": "issue_refund",
+    "description": "Refund to original payment method. Max $100 self-serve; escalate above. Arrives in 5-10 business days.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "order_id": {"type": "string"},
+        "amount": {"type": "number", "description": "USD, max 100.00"},
+        "reason": {"type": "string"}
+      },
+      "required": ["order_id", "amount", "reason"]
+    }
+  },
+  {
+    "name": "update_account",
+    "description": "Update email, shipping address, or subscription preferences. Verify identity first. Cannot update payment info (direct customer to account settings).",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "account_email": {"type": "string", "description": "Current account email"},
+        "field": {"type": "string", "enum": ["email", "shipping_address", "subscription_preferences"]},
+        "new_value": {"type": "string"}
+      },
+      "required": ["account_email", "field", "new_value"]
+    }
+  },
+  {
+    "name": "get_product_info",
+    "description": "Look up product specs, price, stock, warranty, and compatibility from the catalog. Use instead of internal knowledge.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "query": {"type": "string", "description": "Product name, SKU, or specific search phrase"}
+      },
+      "required": ["query"]
+    }
+  },
+  {
+    "name": "escalate_to_human",
+    "description": "Hand off to a human agent per escalation policy. Include order numbers, desired outcome, and steps already taken in the summary.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "summary": {"type": "string"},
+        "priority": {"type": "string", "enum": ["low", "normal", "high", "urgent"]},
+        "category": {"type": "string", "enum": ["refund_over_limit", "safety_issue", "legal", "fraud", "repeat_contact", "enterprise_account", "customer_request", "other"]}
+      },
+      "required": ["summary", "priority", "category"]
+    }
+  },
+  {
+    "name": "check_giftcard_balance",
+    "description": "Check gift card balance, expiry, and active status by 16-digit card number (starts with 6039).",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "card_number": {"type": "string"}
+      },
+      "required": ["card_number"]
+    }
+  }
+]

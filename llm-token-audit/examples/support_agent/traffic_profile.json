@@ -1,0 +1,23 @@
+{
+  "description": "Monthly traffic assumptions for the Northwind support agent cost model.",
+  "requests_per_month": 1000000,
+  "avg_conversation_history_tokens": 900,
+  "avg_user_message_tokens": 120,
+  "avg_output_tokens_baseline": 280,
+  "avg_output_tokens_optimized": 170,
+  "output_reduction_rationale": "Optimized prompt caps replies at ~150 words, removes mandated greetings/restating/sign-offs. 280->170 avg output tokens is a conservative estimate for this policy change.",
+  "baseline_model": "claude-sonnet-4-6",
+  "cache": {
+    "enabled_in_optimized": true,
+    "hit_rate": 0.95,
+    "note": "System prompt + tool schemas marked with cache_control. 95% steady-state hit rate is typical for high-volume single-agent traffic; the 5% misses pay the 1.25x cache-write premium."
+  },
+  "routing": {
+    "enabled_in_optimized": true,
+    "mix": {
+      "simple": {"share": 0.65, "model": "claude-haiku-4-5", "examples": "order status, tracking, gift card balance, shipping questions"},
+      "standard": {"share": 0.35, "model": "claude-sonnet-4-6", "examples": "returns, refunds, account changes, multi-step or ambiguous issues"}
+    },
+    "note": "Share estimates should come from classifying a sample of real production transcripts before deployment."
+  }
+}
